@@ -2,7 +2,7 @@ import Foundation
 import EventKit
 import CoreLocation
 import MapKit
-import UIKit // нужно для UIColor.systemBlue
+import UIKit
 
 final class CalendarService {
     static let shared = CalendarService()
@@ -16,18 +16,73 @@ final class CalendarService {
     }
     
     private func findOrCreateCalendar() throws -> EKCalendar {
+        // 1) Уже существует?
         if let existing = store.calendars(for: .event).first(where: { $0.title == calendarName }) {
             return existing
         }
-        guard let source = store.defaultCalendarForNewEvents?.source ?? store.sources.first(where: { $0.sourceType == .local || $0.sourceType == .calDAV }) else {
-            throw NSError(domain: "CalendarService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Не найден источник календарей"])
-        }
+        
+        // 2) Выбираем источник
+        let source = try pickBestSource()
+        
+        // 3) Создаём календарь
         let cal = EKCalendar(for: .event, eventStore: store)
         cal.title = calendarName
         cal.source = source
         cal.cgColor = UIColor.systemBlue.cgColor
         try store.saveCalendar(cal, commit: true)
         return cal
+    }
+    
+    private func pickBestSource() throws -> EKSource {
+        // Если у системы есть дефолтный календарь — используем его источник
+        if let defaultCal = store.defaultCalendarForNewEvents {
+            return defaultCal.source
+        }
+        
+        // Проверяем наличие «записываемых» источников
+        let writableTypes: [EKSourceType] = [.calDAV, .exchange, .local]
+        let writableSources = store.sources.filter { writableTypes.contains($0.sourceType) }
+        if writableSources.isEmpty {
+            // На симуляторе особенно частый кейс
+            #if targetEnvironment(simulator)
+            let hint = "Вы запускаете в Simulator. У симулятора часто нет календарных источников. Проверьте на реальном устройстве с включённым iCloud Календарём или добавленным аккаунтом."
+            #else
+            let hint = "Включите iCloud Календарь или добавьте аккаунт календарей в Настройки → Календарь → Аккаунты."
+            #endif
+            throw NSError(
+                domain: "CalendarService",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "Не найден источник календарей. \(hint)"
+                ]
+            )
+        }
+        
+        // Предпочитаемые типы источников (iCloud/CalDAV → Exchange → Local)
+        let preferredOrder: [EKSourceType] = [.calDAV, .exchange, .local]
+        for t in preferredOrder {
+            if let s = writableSources.first(where: { $0.sourceType == t }) {
+                return s
+            }
+        }
+        
+        // Fallback: источник любого существующего календаря событий
+        if let anyCalSource = store.calendars(for: .event).first?.source {
+            return anyCalSource
+        }
+        
+        // Последний шанс — любой первый источник (из уже отфильтрованных writable)
+        if let any = writableSources.first {
+            return any
+        }
+        
+        throw NSError(
+            domain: "CalendarService",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey:
+                "Не найден источник календарей. Включите iCloud Календарь или добавьте учётную запись календарей в настройках устройства."
+            ]
+        )
     }
     
     func importSchedule(items: [ScheduleItem],
@@ -44,21 +99,21 @@ final class CalendarService {
         var added = 0
         var skipped = 0
         
-        // Geocode campus address once
+        // Геокод адреса один раз
         var coord: CLLocationCoordinate2D?
         if let addr = campusAddress, !addr.isEmpty {
             coord = try await geocode(address: addr)
         }
         
         for item in items {
-            // Subgroup filtering
+            // Фильтр по подгруппам
             if subgroup == .one, item.subgroup == .two { continue }
             if subgroup == .two, item.subgroup == .one { continue }
-            // Parity filtering
+            // Фильтр по чётности
             let parity = item.weekParity ?? weekParity
             let recurrenceWeeks = (parity == .none) ? 1 : 2
             
-            // Build start/end date for first occurrence
+            // Первая дата
             guard let (startDate, endDate) = Self.firstOccurrence(for: item,
                                                                   scheduleKind: scheduleKind,
                                                                   startAnchor: startAnchor) else {
@@ -76,7 +131,7 @@ final class CalendarService {
             event.startDate = startDate
             event.endDate = endDate
             
-            // Recurrence
+            // Повторяемость
             let rule = EKRecurrenceRule(recurrenceWith: .weekly,
                                         interval: recurrenceWeeks,
                                         daysOfTheWeek: nil,
@@ -88,7 +143,7 @@ final class CalendarService {
                                         end: repeatUntil.map { EKRecurrenceEnd(end: $0) })
             event.addRecurrenceRule(rule)
             
-            // Location + "time to leave" via ETA alarm
+            // Локация + "пора выходить"
             if let addr = campusAddress, !addr.isEmpty {
                 let loc = EKStructuredLocation(title: addr)
                 if let c = coord {
@@ -96,7 +151,7 @@ final class CalendarService {
                 }
                 event.structuredLocation = loc
                 if let offset = try? await TravelTimeService.shared.leaveNowOffset(to: coord, transport: transport) {
-                    let alarm = EKAlarm(relativeOffset: -offset) // seconds before start
+                    let alarm = EKAlarm(relativeOffset: -offset)
                     event.addAlarm(alarm)
                 }
             }

@@ -29,6 +29,16 @@
 		3BD522262E83FAE80097F4EC /* PhotoToCalendarUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PhotoToCalendarUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3B730C272E84826900333F1E /* Exceptions for "PhotoToCalendar" folder in "PhotoToCalendar" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3BD5220E2E83FADF0097F4EC /* PhotoToCalendar */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 		3BD5225B2E84091E0097F4EC /* Exceptions for "PhotoToCalendar" folder in "Compile Sources" phase from "PhotoToCalendar" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
@@ -43,6 +53,7 @@
 		3BD522112E83FADF0097F4EC /* PhotoToCalendar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				3B730C272E84826900333F1E /* Exceptions for "PhotoToCalendar" folder in "PhotoToCalendar" target */,
 				3BD5225B2E84091E0097F4EC /* Exceptions for "PhotoToCalendar" folder in "Compile Sources" phase from "PhotoToCalendar" target */,
 			);
 			path = PhotoToCalendar;
@@ -413,7 +424,12 @@
 				DEVELOPMENT_TEAM = 5U6F8G4NAF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PhotoToCalendar/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Нужно для добавления расписания в ваш Календарь";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Чтобы сделать фото расписания ";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -447,7 +463,12 @@
 				DEVELOPMENT_TEAM = 5U6F8G4NAF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PhotoToCalendar/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Нужно для добавления расписания в ваш Календарь";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Чтобы сделать фото расписания ";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
